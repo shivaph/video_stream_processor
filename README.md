@@ -1,10 +1,16 @@
 # Copyright (c) 2025 Shiva Hanumanthaiah
 # All rights reserved.
 
+Project Title: Live Video Stream Processor
+
+Please refer to the following snapshot image file (that is found in this repository) for the WebUI interface design related details:
+
+screen_shot_webcam_prj.png
+
 This project implements the following requirements using Python programming language:
 
 1. Accept webcam feed as input.
-Note: Since the programmatic access to webcam on Laptop is laborious and resource intensive, I have developed a "Live webcam simulation" as part of this project.
+Note: Since the programmatic access to the webcam on most of the Laptops is laborious and resource intensive, I have developed a "Live webcam simulation" as part of this project.
 
 2. Retrieve video stream from the webcam, this should include fps, video source, frame dimensions.
 
