@@ -1,0 +1,190 @@
+ <!DOCTYPE html>
+ <html>
+ <head>
+     <title>Video Display</title>
+ </head>
+ <body>
+     <div style="max-width: 600px; margin: 20px auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; font-family: sans-serif; background-color: #fafafa;">
+        <h2 style="text-align: center; margin-bottom: 20px;">Video Stream Settings</h2>
+
+        <form method="post" id="videoForm" style="display: flex; flex-direction: column; gap: 15px;">
+
+            <!-- Video Source Dropdown -->
+            <div style="display: flex; align-items: center;">
+                <label for="video_source" style="flex: 1; text-align: right; margin-right: 10px;">Video Source:</label>
+                <select id="video_source" name="video_source" style="flex: 2; padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 100%;">
+                    {% for file in video_files %}
+                        <option value="{{ file }}" {% if file == selected_video %}selected{% endif %}>{{ file }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- FPS Input (Read-only) -->
+            <div style="display: flex; align-items: center;">
+                <label for="fps" style="flex: 1; text-align: right; margin-right: 10px;">FPS:</label>
+                <input type="number" id="fps" name="fps" value="{{ fps }}" readonly
+                style="flex: 2; padding: 8px; border: 1px solid #ccc; border-radius: 4px; background-color: #f0f0f0;">
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 2fr; align-items: center;">
+                <label for="frame_width" style="text-align: right; padding-right: 10px;">Frame Width:</label> 
+                <input type="number" id="frame_width" name="frame_width" value="{{ frame_width }}" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 100%;" oninput="updateVideoWidth()"> 
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 2fr; align-items: center;">
+                <label for="frame_height" style="text-align: right; padding-right: 10px;">Frame Height:</label>
+                <input type="number" id="frame_height" name="frame_height" value="{{ frame_height }}" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 100%;" oninput="updateVideoHeight()"> 
+            </div>
+
+            <div style="display: flex; justify-content: space-between; margin-top: 20px;">
+                <input type="submit" value="Apply Changes" style="padding: 10px 15px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                <button type="button" onclick="startCaching()" style="padding: 10px 15px; background-color: #008CBA; color: white; border: none; border-radius: 4px; cursor: pointer;">Start Caching</button>
+                <button type="button" id="statusButton" style="padding: 10px 15px; background-color: #f0f0f0; border: 1px solid #ccc; border-radius: 4px; cursor: default;">Caching Status</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="video-container" style="display: flex; justify-content: space-around; margin-top: 20px;">
+        <div class="video-frame" style="flex: 1; text-align: center;">
+            <h2>Grayscale Video</h2>
+            <h2>Grayscale Intensity Control</h2>
+            <div style="display: flex; align-items: center; gap: 10px;">
+    <input type="range" id="grayScaleIntensity" min="0" max="255" value="128" 
+           style="width: 150px;margin-left: 100px;" oninput="updateGrayScaleIntensity()">
+    <p style="margin: 0;">Intensity: <span id="intensityValue">128</span></p>
+</div>
+
+            <img id="grayVideo" src="" alt="Grayscale Video" style="width: 320px; height: 240px; object-fit: contain; border: 1px solid #ddd; border-radius: 4px;">
+        </div>
+        <div class="video-frame" style="flex: 1; text-align: center;">
+            <h2>Channel Video</h2>
+            <select id="channelSelect" style="margin-top: 10px; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                <option value="blue">Blue</option>
+                <option value="red">Red</option>
+                <option value="green">Green</option>
+            </select> <br><br>
+            <img id="channel" src="" alt="Channel Video" style="width: 320px; height: 240px; object-fit: contain; border: 1px solid #ddd; border-radius: 4px;">
+        </div>
+
+        <div class="video-frame" style="flex: 1; text-align: center;">
+            <h2>BGR Video</h2> <br><br><br>
+            <img id="originalVideo" src="" alt="Original Video" style="width: 320px; height: 240px; object-fit: contain; border: 1px solid #ddd; border-radius: 4px;">
+        </div>
+    </div>
+
+     <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+     <script>
+         function updateVideoHeight() {
+         }
+         function updateVideoWidth() {
+            let widthValue = document.getElementById("frame_width").value;
+            let channelVideo = document.getElementById("channel");
+            let grayVideo = document.getElementById("grayVideo");
+            let originalVideo = document.getElementById("originalVideo");
+         }
+         const channelSelect = document.getElementById('channelSelect');
+
+         const eventSource = new EventSource('/video_feed');
+         eventSource.onmessage = function(event) {
+             const data = JSON.parse(event.data);
+             document.getElementById('grayVideo').src = 'data:image/jpeg;base64,' + data.gray;
+             document.getElementById('originalVideo').src = 'data:image/jpeg;base64,' + data.bgr;
+             document.getElementById('channel').src = 'data:image/jpeg;base64,' + data.channel_color;
+             document.getElementById('statusButton').textContent = data.cache_status;
+             document.getElementById('fps').value = data.fps;
+         };
+
+         function updateGrayScaleIntensity() {
+            let intensity = document.getElementById("grayScaleIntensity").value;
+            document.getElementById("intensityValue").innerText = intensity;
+
+            fetch('/set_grayscale_intensity', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 
+                    gray_intensity: intensity }),
+            })
+         }
+
+         channelSelect.addEventListener('change', function() {
+            const selectedChannel = channelSelect.value;
+
+            fetch('/set_channel_color', { 
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ channel_color : selectedChannel }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                // handle response
+                if(data.status === 'success'){
+                    console.log("Channel color changed successfully")
+                } else{
+                    console.log("Channel color change failed")
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        });
+
+         document.getElementById('videoForm').addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent default form submission
+
+            let heightValue = document.getElementById("frame_height").value;
+            let channelVideo = document.getElementById("channel");
+            let grayVideo = document.getElementById("grayVideo");
+            let originalVideo = document.getElementById("originalVideo");
+
+            const formData = new FormData(this); // Create form data object
+            fetch('/apply_changes', { // Replace with your server endpoint
+                method: 'POST',
+                body: formData,
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert('Changes applied successfully!');
+                } else {
+                    alert('Failed to apply changes.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while applying changes.');
+            });
+        });
+
+
+        function startCaching() {
+            fetch('/start_caching', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({}), // Send an empty JSON object
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'started') {
+                    document.getElementById('statusButton').textContent = 'Caching Started';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('statusButton').textContent = 'Caching Error';
+            });
+        }
+
+
+     </script>
+ </body>
+ <footer>
+    <p>&copy; 2025 Shiva Hanumanthaiah. All rights reserved.</p>
+</footer>
+
+ </html>
