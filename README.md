@@ -24,7 +24,7 @@ Note: Since the programmatic access to the webcam on most of the Laptops is labo
 
 How-to run the python based backend service:
 
-1. Copy few video files of format "" to the project root folder on your test machine
+1. Copy few video files of format '.mp4' or '.avi' or '.mov' to the folder named "video_source_files" that is located under the project root folder.
 Example:
 ls <project_root_folder>/video_source_files/
 big_buck_bunny.mp4	test_video.mp4
